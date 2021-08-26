@@ -51,12 +51,16 @@ class DecisionTree:
     def fit(self, X, y):
         # Here I basically adjust the data to fit to my previously-coded algorithm from TDT4171
         examples = X
+        # Now if the data has zodiac signs, we delete this because we are men and women of science, and we do not speak
+        # in bullshit
+        if 'Founder Zodiac' in examples.columns:
+            examples.drop(columns=['Founder Zodiac'], inplace=True)
         # Create a list of the attributes we will train on (excluding the attribute we will predict)
-        attributes = X.columns
+        attributes = examples.columns
         # In my implementation, the prediction-column and the rest of the dataset need to be joined
         examples[y.name] = y
         # Here I just use fit as an init function
-        self.training_set = X
+        self.training_set = examples
         self.goal = y.name
         self.attributes = attributes
         self.p = self.training_set[self.goal].value_counts()[1]
@@ -66,7 +70,6 @@ class DecisionTree:
 
     def calculate_boolean_entropy(self, q):
         if q == 0 or q == 1:
-            # return -(0 + (1-0) log(1)) = 0
             return 0
         # return B(q)
         r1 = q * math.log(q, 2)
@@ -103,8 +106,10 @@ class DecisionTree:
 
     def get_plurality_value(self, examples):
         # Examples will be a DataFrame with set attributes, for example ('Temp' == 'Hot') & ('Wind' == 'Weak')
-        # We therefore just access the goal-column of these combined attributes, and count how many there are
-        return 1 if examples[self.goal].value_counts()[1] > examples[self.goal].value_counts()[0] else 0
+        # We therefore pick the result that has the most amount of outcomes (either positive or negative)
+        # by grouping the dataframe by outcomes, and then choosing the outcome that maximizes this amount
+        return examples[self.goal].value_counts().index[np.argmax(examples[self.goal].value_counts())]
+        # return 1 if examples[self.goal].value_counts()[1] > examples[self.goal].value_counts()[0] else 0
 
     def argmax(self, attributes, examples):
         # Assign the first attribute
@@ -281,7 +286,7 @@ def entropy(counts):
     return - np.sum(probs * np.log2(probs))
 
 
-if __name__ == '__main__':
+def problem_1():
     data_1 = pd.read_csv('data_1.csv')
     X = data_1.drop(columns=['Play Tennis'])
     y = data_1['Play Tennis']
@@ -290,3 +295,27 @@ if __name__ == '__main__':
     print(model_1.predict(data_1))
     rules = model_1.get_rules()
     print(rules)
+
+def problem_2():
+    data_2 = pd.read_csv('data_2.csv')
+    data_2_train = data_2.query('Split == "train"')
+    data_2_valid = data_2.query('Split == "valid"')
+    data_2_test = data_2.query('Split == "test"')
+    X_train, y_train = data_2_train.drop(columns=['Outcome', 'Split']), data_2_train.Outcome
+    X_valid, y_valid = data_2_valid.drop(columns=['Outcome', 'Split']), data_2_valid.Outcome
+    X_test, y_test = data_2_test.drop(columns=['Outcome', 'Split']), data_2_test.Outcome
+
+    # Fit model (TO TRAIN SET ONLY)
+    model_2 = DecisionTree()  # <-- Feel free to add hyperparameters
+    model_2.fit(X_train, y_train)
+
+    print(f'Train: {accuracy(y_train, model_2.predict(X_train)) * 100 :.1f}%')
+    print(f'Valid: {accuracy(y_valid, model_2.predict(X_valid)) * 100 :.1f}%')
+    print(f'Test: {accuracy(y_test, model_2.predict(X_test)) * 100 :.1f}%')
+
+
+
+
+if __name__ == '__main__':
+    problem_1()
+    problem_2()
