@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+# To suppress warning
 pd.options.mode.chained_assignment = None
 
 # IMPORTANT: DO NOT USE ANY OTHER 3RD PARTY PACKAGES
@@ -33,10 +34,9 @@ class LogisticRegression:
             X_temp = X
             X_temp['x2'] = X_temp['x0'] ** 2 + X_temp['x1'] ** 2 - 1
             X = X_temp.drop(columns=['x0', 'x1'])
+            X['x1'] = np.random.uniform(low=-0.5, high=0.5, size=X.shape[0])
         num_features = len(X.columns)
         num_examples = len(X.index)
-        # First we just normalize all the values in the dataframe
-        X = normalize_dataframe(X)
         # Then we initialize weights and bias to be uniformly distributed between -0.5 and 0.5
         # (I did this in a neural network from scratch task, so I figured I might as well try it here as well)
         weights = np.random.uniform(low=-0.5, high=0.5, size=(num_features, 1))
@@ -83,8 +83,7 @@ class LogisticRegression:
             X_temp = X
             X_temp['x2'] = X_temp['x0'] ** 2 + X_temp['x1'] ** 2 - 1
             X = X_temp.drop(columns=['x0', 'x1'])
-        # Again we normalize the values
-        X = normalize_dataframe(X)
+            X['x1'] = np.random.uniform(low=-0.5, high=0.5, size=X.shape[0])
         # We calculate the predictions by shoving everything into sigmoid (all hail sigmoid)
         predictions = sigmoid(np.dot(X, self.weights) + self.bias)
         # We return the array of predictions where we round to the nearest integer (either 0 or 1)
@@ -93,21 +92,6 @@ class LogisticRegression:
 
 # --- Some utility functions
 
-def normalize_dataframe(X):
-    """
-    This function will take in a dataframe object (which will just be an array of m x n dimensions) and normalize all
-    values in it, such that all values lie in the range [0, 1]. This is something that is regularly done for neural
-    networks, and as such I will do the same here. It will use min-max normalization
-    Args:
-        X: (array<m,n>): a matrix of floats with
-                m rows (#samples) and n columns (#features)
-
-    Returns:
-        X: (array<m,n>): a matrix of floats in the range [0, 1] with
-                m rows (#samples) and n columns (#features)
-    """
-    return (X - X.min()) / (X.max() - X.min())
-
 
 def calculate_gradients(X, y_true, y_pred):
     """
@@ -115,7 +99,7 @@ def calculate_gradients(X, y_true, y_pred):
     when training the model. This will happen when the regression model predicts the answers to each
     example in the training loop (in the epoch section), and the gradient will calculate the "average
     distance" away from the correct answer, and return the adjustment to the weights accordingly.
-    This is in line with stochastic gradient descent, i.e. mathematically calculating the average
+    This is in line with gradient descent, i.e. mathematically calculating the average
     distance away from the local (and hopefully global) minimum of the function we're trying to predict.
     Args:
         X (array<m,n>): a matrix of floats with
@@ -132,7 +116,7 @@ def calculate_gradients(X, y_true, y_pred):
     """
     # First we get the number of training examples from the dataset
     num_examples = len(X.index)
-    # We then use the gradient descent formula from the notes provided in the notebook
+    # We then use the gradient descent formula from the notes provided in the notes
     # The following line corresponds to y - h_{theta}(x) (since we use the entire vectors, thus no ^(i))
     prediction_difference = y_true - y_pred
     # Then we multiply every training example with the difference between prediction and true value
