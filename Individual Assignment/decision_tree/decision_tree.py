@@ -1,6 +1,7 @@
 import pandas as pd
 import math
 import numpy as np
+import pprint
 
 # All of this code is basically just a re-implementation of my DecisionTree-algorithm from TDT4171.
 # It's not very streamlined, but it works, so I just saved time from having to implement it again
@@ -51,7 +52,7 @@ class DecisionTree:
     def fit(self, X, y):
         # Here I basically adjust the data to fit to my previously-coded algorithm from TDT4171
         examples = X
-        # Now if the data has zodiac signs, we delete this because we are men and women of science, and we do not speak
+        # Now if the data has zodiac signs, we ignore this because we are men and women of science, and we do not speak
         # in bullshit
         if 'Founder Zodiac' in examples.columns:
             examples.drop(columns=['Founder Zodiac'], inplace=True)
@@ -109,13 +110,12 @@ class DecisionTree:
         # We therefore pick the result that has the most amount of outcomes (either positive or negative)
         # by grouping the dataframe by outcomes, and then choosing the outcome that maximizes this amount
         return examples[self.goal].value_counts().index[np.argmax(examples[self.goal].value_counts())]
-        # return 1 if examples[self.goal].value_counts()[1] > examples[self.goal].value_counts()[0] else 0
 
     def argmax(self, attributes, examples):
         # Assign the first attribute
         A = attributes[0]
         current_gain = self.B - self.calculate_remainder(A, examples)
-        # Check if other attributes are better to start with
+        # Check if other attributes are better to start with by greedy information gain
         for current_attribute in attributes[1:]:
             test_gain = self.B - self.calculate_remainder(current_attribute, examples)
             # If current attribute gains more information than the one we had, then replace it
@@ -292,9 +292,8 @@ def problem_1():
     y = data_1['Play Tennis']
     model_1 = DecisionTree()
     model_1.fit(X, y)
-    print(model_1.predict(data_1))
     rules = model_1.get_rules()
-    print(rules)
+    pprint.pprint(rules)
 
 def problem_2():
     data_2 = pd.read_csv('data_2.csv')
